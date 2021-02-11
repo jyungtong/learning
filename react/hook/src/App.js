@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import BoxComponent from './components/BoxComponent';
+import Counter from './components/Counter';
+import MyName from './components/MyName';
 import { useThemeUpdate } from './contexts/ThemeContext';
 import './App.css';
 
@@ -33,6 +35,8 @@ function App() {
   //   fetchData();
   // }, [])
 
+  console.log('====rerender App.js');
+
   return (
     <div className="App">
       <h1>Clicked {count} times</h1>
@@ -43,8 +47,14 @@ function App() {
 
       <BoxComponent/>
       <button onClick={toggleTheme}>Toggle theme</button>
+
+      <hr/>
+      <Counter />
+
+      <hr/>
+      <MyName />
     </div>
   );
 }
 
-export default React.memo(App);
+export default App;
