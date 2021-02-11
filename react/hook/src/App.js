@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import BoxComponent from './components/BoxComponent';
 import Counter from './components/Counter';
 import MyName from './components/MyName';
+import ReduxCounter from './components/ReduxCounter';
+import ReduxMyName from './components/ReduxMyName';
 import { useThemeUpdate } from './contexts/ThemeContext';
 import './App.css';
 
@@ -53,6 +55,12 @@ function App() {
 
       <hr/>
       <MyName />
+
+      <hr/>
+      <ReduxCounter />
+
+      <hr/>
+      <ReduxMyName />
     </div>
   );
 }
