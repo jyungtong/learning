@@ -1,0 +1,12 @@
+.box {
+  width: 200px;
+  height: 200px;
+}
+
+.greyBox {
+  background-color: grey;
+}
+
+.redBox {
+  background-color: red;
+}
