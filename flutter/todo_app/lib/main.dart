@@ -42,9 +42,32 @@ class _TodoScreenState extends State<TodoScreen> {
           FocusScope.of(context).unfocus();
         },
         child: Container(
-          child: ListView.builder(
-            itemBuilder: (BuildContext context, int index) => _todoCards[index],
-            itemCount: _todoCards.length,
+          child: Scrollbar(
+            child: ListView.builder(
+              itemCount: _todoCards.length,
+              itemBuilder: (BuildContext context, int index) {
+                return Dismissible(
+                  key: UniqueKey(),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  child: _todoCards[index],
+                  onDismissed: (direction) {
+                    print('====direction: $direction');
+
+                    setState(() {
+                      _todoCards.removeAt(index);
+                    });
+                  },
+                );
+              },
+            ),
           ),
         ),
       ),

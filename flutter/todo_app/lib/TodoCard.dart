@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 
 class TodoCard extends StatefulWidget {
   String task;
+  int index;
   bool isCompleted;
 
-  TodoCard({this.task, this.isCompleted = false});
+  TodoCard({this.task, this.isCompleted = false, this.index});
 
   @override
   _TodoCardState createState() => _TodoCardState();
