@@ -58,13 +58,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  Future<List<Todo>> todos = [];
+  Future<List<Todo>> todos;
 
-  @override
-  void initState() {
-    super.initState();
-    todos = fetchTodos();
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   todos = fetchTodos();
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -72,18 +72,34 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(8.0),
-        itemCount: todos.length,
-        itemBuilder: (_, index) {
-          return Container(
-            height: 50,
-            child: Center(
-              child: Text(todos[index].title),
-            ),
+      body: FutureBuilder(
+        builder: (context, snapshot) {
+          // WHILE THE CALL IS BEING MADE AKA LOADING
+          if (ConnectionState.active != null && !snapshot.hasData) {
+            return Center(child: Text('Loading'));
+          }
+
+          // WHEN THE CALL IS DONE BUT HAPPENS TO HAVE AN ERROR
+          if (ConnectionState.done != null && snapshot.hasError) {
+            return Center(child: Text('Something went wrong :('));
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.all(8.0),
+            itemCount: snapshot.data.length,
+            itemBuilder: (_, index) {
+              return Container(
+                height: 50,
+                child: Center(
+                  child: Text(snapshot.data[index].title),
+                ),
+              );
+            },
+            separatorBuilder: (BuildContext context, int index) =>
+                const Divider(),
           );
         },
-        separatorBuilder: (BuildContext context, int index) => const Divider(),
+        future: fetchTodos(),
       ),
     );
   }
