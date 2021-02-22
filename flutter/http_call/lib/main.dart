@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -28,7 +29,8 @@ Future<List<Todo>> fetchTodos() async {
   final response = await http.get('https://jsonplaceholder.typicode.com/todos');
 
   if (response.statusCode == 200) {
-    return jsonDecode(response.body).map((r) => Todo.fromJson(r));
+    var parsed = jsonDecode(response.body);
+    return List<Todo>.from(parsed.map((r) => Todo.fromJson(r)));
   } else {
     throw Exception('failed to load todos');
   }
@@ -60,11 +62,11 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Future<List<Todo>> todos;
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   todos = fetchTodos();
-  // }
+  @override
+  void initState() {
+    super.initState();
+    todos = fetchTodos();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,33 +75,33 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: FutureBuilder(
+        future: todos,
         builder: (context, snapshot) {
-          // WHILE THE CALL IS BEING MADE AKA LOADING
-          if (ConnectionState.active != null && !snapshot.hasData) {
-            return Center(child: Text('Loading'));
+          if (snapshot.hasData) {
+            return Scrollbar(
+              child: ListView.separated(
+                padding: const EdgeInsets.all(8.0),
+                itemCount: snapshot.data.length,
+                itemBuilder: (_, index) {
+                  return Container(
+                    height: 50,
+                    child: Center(
+                      child: Text(snapshot.data[index].title),
+                    ),
+                  );
+                },
+                separatorBuilder: (BuildContext context, int index) =>
+                    const Divider(),
+              ),
+            );
+          } else if (snapshot.hasError) {
+            return Text("${snapshot.error}");
           }
 
-          // WHEN THE CALL IS DONE BUT HAPPENS TO HAVE AN ERROR
-          if (ConnectionState.done != null && snapshot.hasError) {
-            return Center(child: Text('Something went wrong :('));
-          }
-
-          return ListView.separated(
-            padding: const EdgeInsets.all(8.0),
-            itemCount: snapshot.data.length,
-            itemBuilder: (_, index) {
-              return Container(
-                height: 50,
-                child: Center(
-                  child: Text(snapshot.data[index].title),
-                ),
-              );
-            },
-            separatorBuilder: (BuildContext context, int index) =>
-                const Divider(),
+          return Center(
+            child: CircularProgressIndicator(),
           );
         },
-        future: fetchTodos(),
       ),
     );
   }
