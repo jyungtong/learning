@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server';
 
-export function POST(req: Request) {
+export async function POST(req: Request) {
     // Get data submitted in request's body.
-    const body = req.body;
+    const body = await req.json();
 
     // Optional logging to see the responses
     // in the command line where next.js app is running.
+    console.log('header: ', req.headers.get('content-type'));
     console.log('body: ', body);
+
+    const { searchParams } = new URL(req.url);
+
+    console.log('searchParams: ', searchParams);
+    console.log('params: ', searchParams.getAll('test[]'));
 
     // Guard clause checks for first and last name,
     // and returns early if they are not found
