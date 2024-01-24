@@ -6,5 +6,5 @@ import (
 )
 
 func main() {
-    fmt.Println(reverse.String("hello"))
+    fmt.Println(reverse.String("hello"), reverse.Int(24601))
 }
