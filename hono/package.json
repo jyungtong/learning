@@ -1,0 +1,19 @@
+{
+  "name": "hono",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "sst dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "hono": "^4.9.2",
+    "sst": "3.17.10"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "8.10.152"
+  }
+}
