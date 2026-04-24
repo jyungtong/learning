@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 func main() {
 	var num int = 123
@@ -29,6 +32,15 @@ func main() {
 		fmt.Println(i, string(c))
 	}
 
+	for i := 0; i < len(a); i++ {
+		fmt.Println(string(a[i]))
+	}
+
+	fmt.Println(a[2:4])
+	fmt.Println(a[:3])
+	fmt.Println(a[6:])
+	fmt.Println(a[:])
+
 	fmt.Println("a len", len(a))
 
 	b := `hiii` + a
@@ -53,6 +65,18 @@ func main() {
 	}
 	fmt.Println(g)
 
-	const h [2]int = [2]int{1,2}
-	h[1] = 3
+	// variable shadowing
+	h := 10
+	fmt.Println(h)
+
+	if true {
+		h := 5
+		fmt.Println(h)
+	}
+
+	fmt.Println(h)
+
+	i := []int{3,1,6,5}
+	sort.Ints(i[:])
+	fmt.Println(i)
 }
