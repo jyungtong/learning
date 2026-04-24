@@ -79,4 +79,7 @@ func main() {
 	i := []int{3,1,6,5}
 	sort.Ints(i[:])
 	fmt.Println(i)
+
+	i = append(i, 9)
+	fmt.Println(i)
 }
