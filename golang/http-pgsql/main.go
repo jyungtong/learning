@@ -168,6 +168,12 @@ func main() {
 
 		deleted, err := store.Delete(r.Context(), id)
 
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+
 		if deleted {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
