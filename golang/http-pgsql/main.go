@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -17,8 +18,35 @@ type Expense struct {
 	Amount float64 `json:"amount"`
 }
 
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+
 type Store struct {
 	db *pgxpool.Pool
+}
+
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Println(err)
+	}
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, ErrorResponse{Error: message})
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+	})
 }
 
 func NewStore() *Store {
@@ -115,21 +143,22 @@ func main() {
 	store := NewStore()
 	defer store.Close()
 
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{ "msg": "OK" })
 	})
 
-	http.HandleFunc("/expenses", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/expenses", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			expenses, err := store.GetAll(r.Context())
 			if err != nil {
 				log.Println(err)
-				http.Error(w, "internal server error", http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "internal server error")
 			}
 
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(expenses)
+			writeJSON(w, http.StatusOK, expenses)
 		case http.MethodPost:
 			var input struct{
 				Desc string
@@ -137,32 +166,32 @@ func main() {
 			}
 			err := json.NewDecoder(r.Body).Decode(&input)
 			if err != nil {
-				http.Error(w, "bad request", http.StatusBadRequest)
+				writeError(w, http.StatusBadRequest, "bad request")
 			}
 
 			e, err := store.Add(r.Context(), input.Desc, input.Amount)
 			if err != nil {
 				log.Println(err)
-				http.Error(w, "internal server error", http.StatusInternalServerError)
+				writeError(w, http.StatusInternalServerError, "internal server error")
 				return
 			}
 
-			json.NewEncoder(w).Encode(e)
+			writeJSON(w, http.StatusCreated, e)
 		default:
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 		}
 	})
 
-	http.HandleFunc("/expenses/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/expenses/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+			writeError(w, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
 
 		var id int
 		_, err := fmt.Sscanf(r.URL.Path, "/expenses/%d", &id)
 		if err != nil {
-			http.Error(w, "invalid id", http.StatusBadRequest)
+			writeError(w, http.StatusBadRequest, "invalid id")
 			return
 		}
 
@@ -170,17 +199,17 @@ func main() {
 
 		if err != nil {
 			log.Println(err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			writeError(w, http.StatusInternalServerError, "internal server error")
 			return
 		}
 
 		if deleted {
 			w.WriteHeader(http.StatusNoContent)
 		} else {
-			http.Error(w, "not found", http.StatusNotFound)
+			writeError(w, http.StatusNotFound, "not found")
 		}
 	})
 
 	log.Println("listening :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
 }
