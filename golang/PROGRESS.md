@@ -1,0 +1,160 @@
+# Go Backend Learning Progress
+
+Learner:
+- Experienced TS/Node/AWS backend dev.
+- Learning Go backend/microservice style.
+- Prefers build-first, explain pattern after.
+- Caveman mode active: terse, exact.
+
+## Project
+
+Expense Tracker API.
+
+## Syllabus
+
+| Day | Topic | Status |
+| --- | --- | --- |
+| 1 | `net/http`, structs, JSON encode | Completed |
+| 2 | POST body decode, pointer `&`, `append` | Completed |
+| 3 | `sync.Mutex`, `defer`, pointer receivers, Delete | Completed |
+| 4 | PostgreSQL via `pgx` | Completed |
+| 5 | Middleware, structured errors | Not started |
+| 6 | Project structure, packages | Not started |
+| 7 | Goroutines, ticker, graceful shutdown | Not started |
+
+Current Day 4 folder:
+- `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql`
+
+Older Day 3 folder:
+- `/Users/jyung/Documents/dev/personal/learning/golang/http-sync`
+
+Important:
+- `http-sync` is still old in-memory version.
+- `http-pgsql` is actual Day 4 code with `pgxpool`, `go.mod`, `go.sum`, and `docker-compose.yml`.
+
+## Completed
+
+Day 1-3:
+- Basic Go HTTP API.
+- In-memory expense store.
+- Routes:
+  - `GET /health`
+  - `GET /expenses`
+  - `POST /expenses`
+  - `DELETE /expenses/:id`
+
+Day 4:
+- Postgres added with Docker Compose.
+- `pgxpool` store added.
+- Store methods use `context.Context`:
+  - `GetAll(ctx)`
+  - `Add(ctx, desc, amount)`
+  - `Delete(ctx, id)`
+- Table auto-created on startup.
+
+## Current Code State
+
+File:
+- `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql/main.go`
+
+Known issues before Day 5 patch:
+- `deleted, err := store.Delete(...)` has unused `err`; `go run .` likely fails compile.
+- Some error paths call `http.Error` but do not `return`, so handler can continue after error.
+- Success JSON writes duplicate header/encoder logic.
+- Uses default mux via `http.HandleFunc` and `ListenAndServe(..., nil)`.
+- No middleware yet.
+- Errors are plain text from `http.Error`, not structured JSON.
+
+## Day 5 Goal
+
+Add production-ish HTTP patterns:
+- logging middleware
+- explicit mux
+- JSON response helper
+- structured JSON errors
+- central error response helper
+
+Keep project single-file until Day 6 project structure.
+
+## Day 5 Target Shape
+
+Add:
+
+```go
+type ErrorResponse struct {
+	Error string `json:"error"`
+}
+```
+
+Add helpers:
+
+```go
+func writeJSON(w http.ResponseWriter, status int, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		log.Println(err)
+	}
+}
+
+func writeError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, ErrorResponse{Error: message})
+}
+```
+
+Add middleware:
+
+```go
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		next.ServeHTTP(w, r)
+
+		log.Printf("%s %s %s", r.Method, r.URL.Path, time.Since(start))
+	})
+}
+```
+
+Use explicit mux:
+
+```go
+mux := http.NewServeMux()
+mux.HandleFunc("/health", ...)
+mux.HandleFunc("/expenses", ...)
+mux.HandleFunc("/expenses/", ...)
+
+log.Fatal(http.ListenAndServe(":8080", loggingMiddleware(mux)))
+```
+
+## Day 5 Checklist
+
+- All API responses JSON except `/health` can stay plain `OK`.
+- All errors use `{"error":"..."}` shape.
+- No `http.Error` left in handlers.
+- Every error response returns immediately.
+- Middleware logs each request.
+- Server uses explicit mux.
+- `go run .` works from `http-pgsql`.
+- Curl checks pass:
+
+```bash
+curl -i http://localhost:8080/expenses
+curl -i -X POST http://localhost:8080/expenses -d 'bad'
+curl -i -X DELETE http://localhost:8080/expenses/not-a-number
+```
+
+## Teaching Points
+
+- `any` is alias for `interface{}`.
+- One JSON response path reduces duplicated headers/encoder code.
+- Structured errors keep clients predictable.
+- Headers must be set before `WriteHeader`.
+- Middleware wraps `http.Handler`.
+- `http.Handler` interface has `ServeHTTP`.
+- `http.HandlerFunc` adapts a function to handler.
+- Request flow: server -> middleware -> mux -> handler.
+
+## Next Step
+
+Patch `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql/main.go` for Day 5.
