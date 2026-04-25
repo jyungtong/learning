@@ -18,11 +18,11 @@ Expense Tracker API.
 | 2 | POST body decode, pointer `&`, `append` | Completed |
 | 3 | `sync.Mutex`, `defer`, pointer receivers, Delete | Completed |
 | 4 | PostgreSQL via `pgx` | Completed |
-| 5 | Middleware, structured errors | Not started |
+| 5 | Middleware, structured errors | Completed |
 | 6 | Project structure, packages | Not started |
 | 7 | Goroutines, ticker, graceful shutdown | Not started |
 
-Current Day 4 folder:
+Current Day 5 folder:
 - `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql`
 
 Older Day 3 folder:
@@ -52,18 +52,30 @@ Day 4:
   - `Delete(ctx, id)`
 - Table auto-created on startup.
 
+Day 5:
+- Logging middleware added.
+- Explicit `http.NewServeMux` added.
+- `writeJSON` helper added.
+- `writeError` helper added.
+- Structured JSON errors added with `{"error":"..."}` shape.
+- Error paths return immediately.
+- Delete success returns JSON.
+- `go run .` verified from `http-pgsql`.
+- Curl checks verified.
+
 ## Current Code State
 
 File:
 - `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql/main.go`
 
-Known issues before Day 5 patch:
-- `deleted, err := store.Delete(...)` has unused `err`; `go run .` likely fails compile.
-- Some error paths call `http.Error` but do not `return`, so handler can continue after error.
-- Success JSON writes duplicate header/encoder logic.
-- Uses default mux via `http.HandleFunc` and `ListenAndServe(..., nil)`.
-- No middleware yet.
-- Errors are plain text from `http.Error`, not structured JSON.
+Current state after Day 5:
+- Uses explicit mux with `http.NewServeMux`.
+- Server wraps mux with logging middleware.
+- Success JSON responses use `writeJSON`.
+- Error responses use `writeError` and `ErrorResponse`.
+- All handler error paths return immediately.
+- `go run .` works from `http-pgsql`.
+- Curl checks pass.
 
 ## Day 5 Goal
 
@@ -157,4 +169,4 @@ curl -i -X DELETE http://localhost:8080/expenses/not-a-number
 
 ## Next Step
 
-Patch `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql/main.go` for Day 5.
+Start Day 6: split single-file app into packages while preserving current behavior.

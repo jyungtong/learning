@@ -146,7 +146,7 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{ "msg": "OK" })
+		writeJSON(w, http.StatusOK, map[string]string{"msg": "OK"})
 	})
 
 	mux.HandleFunc("/expenses", func(w http.ResponseWriter, r *http.Request) {
@@ -156,17 +156,19 @@ func main() {
 			if err != nil {
 				log.Println(err)
 				writeError(w, http.StatusInternalServerError, "internal server error")
+				return
 			}
 
 			writeJSON(w, http.StatusOK, expenses)
 		case http.MethodPost:
-			var input struct{
-				Desc string
+			var input struct {
+				Desc   string
 				Amount float64
 			}
 			err := json.NewDecoder(r.Body).Decode(&input)
 			if err != nil {
 				writeError(w, http.StatusBadRequest, "bad request")
+				return
 			}
 
 			e, err := store.Add(r.Context(), input.Desc, input.Amount)
@@ -204,7 +206,7 @@ func main() {
 		}
 
 		if deleted {
-			w.WriteHeader(http.StatusNoContent)
+			writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
 		} else {
 			writeError(w, http.StatusNotFound, "not found")
 		}
