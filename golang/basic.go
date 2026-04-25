@@ -36,6 +36,7 @@ func main() {
 		fmt.Println(string(a[i]))
 	}
 
+	fmt.Println("====slices====")
 	fmt.Println(a[2:4])
 	fmt.Println(a[:3])
 	fmt.Println(a[6:])
