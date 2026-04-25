@@ -19,18 +19,22 @@ Expense Tracker API.
 | 3 | `sync.Mutex`, `defer`, pointer receivers, Delete | Completed |
 | 4 | PostgreSQL via `pgx` | Completed |
 | 5 | Middleware, structured errors | Completed |
-| 6 | Project structure, packages | Not started |
+| 6 | Project structure, packages | Completed |
 | 7 | Goroutines, ticker, graceful shutdown | Not started |
 
-Current Day 5 folder:
-- `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql`
+Current Day 6 folder:
+- `~/Documents/dev/personal/learning/golang/http-file-structure`
+
+Previous Day 5 folder:
+- `~/Documents/dev/personal/learning/golang/http-pgsql`
 
 Older Day 3 folder:
-- `/Users/jyung/Documents/dev/personal/learning/golang/http-sync`
+- `~/Documents/dev/personal/learning/golang/http-sync`
 
 Important:
 - `http-sync` is still old in-memory version.
-- `http-pgsql` is actual Day 4 code with `pgxpool`, `go.mod`, `go.sum`, and `docker-compose.yml`.
+- `http-pgsql` is Day 5 single-file version.
+- `http-file-structure` is Day 6 split-package version with `internal/api` and `internal/store`.
 
 ## Completed
 
@@ -63,19 +67,37 @@ Day 5:
 - `go run .` verified from `http-pgsql`.
 - Curl checks verified.
 
+Day 6:
+- App split from one `main.go` into packages.
+- `main.go` now only wires dependencies and starts server.
+- `internal/store/store.go` owns Postgres access and `Expense` model.
+- `internal/api/handlers.go` owns route registration and handlers.
+- `internal/api/response.go` owns JSON/error response helpers.
+- `internal/api/middleware.go` owns logging middleware.
+- `api.NewHandler(store *store.Store) http.Handler` returns mux as interface.
+- `api.LoggingMiddleware` exported for `main` package use.
+- `writeJSON` and `writeError` stay unexported inside `api` package.
+- `gofmt -w .` run from `http-file-structure`.
+- `go test ./...` compile check passed from `http-file-structure`.
+
 ## Current Code State
 
-File:
-- `/Users/jyung/Documents/dev/personal/learning/golang/http-pgsql/main.go`
+Files:
+- `~/Documents/dev/personal/learning/golang/http-file-structure/main.go`
+- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/handlers.go`
+- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/middleware.go`
+- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/response.go`
+- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/store/store.go`
 
-Current state after Day 5:
-- Uses explicit mux with `http.NewServeMux`.
-- Server wraps mux with logging middleware.
-- Success JSON responses use `writeJSON`.
-- Error responses use `writeError` and `ErrorResponse`.
-- All handler error paths return immediately.
-- `go run .` works from `http-pgsql`.
-- Curl checks pass.
+Current state after Day 6:
+- Same API behavior as Day 5.
+- `main.go` imports `expense-tracker/internal/api` and `expense-tracker/internal/store`.
+- `main.go` calls `store.NewStore()`, `api.NewHandler(store)`, and `api.LoggingMiddleware(handler)`.
+- `internal/api` package handles HTTP routes, JSON responses, and middleware.
+- `internal/store` package handles `pgxpool`, migrations, and DB methods.
+- `api.NewHandler` returns `http.Handler`; actual returned value is `*http.ServeMux`.
+- `*http.ServeMux` works because it has `ServeHTTP`, so it satisfies `http.Handler` implicitly.
+- Compile check passes with `go test ./...` from `http-file-structure`.
 
 ## Day 5 Goal
 
@@ -166,7 +188,16 @@ curl -i -X DELETE http://localhost:8080/expenses/not-a-number
 - `http.Handler` interface has `ServeHTTP`.
 - `http.HandlerFunc` adapts a function to handler.
 - Request flow: server -> middleware -> mux -> handler.
+- Go package usually maps to folder.
+- Import path starts with module name from `go.mod`: `expense-tracker`.
+- `internal/...` packages are importable only from inside the same module tree.
+- Capitalized identifiers are exported across packages.
+- Lowercase identifiers are private to package.
+- Interfaces are satisfied implicitly; no `implements` keyword.
+- `http.Handler` requires `ServeHTTP(ResponseWriter, *Request)`.
+- `*http.ServeMux` satisfies `http.Handler`, so `return mux` works from `func NewHandler(...) http.Handler`.
+- Returning `http.Handler` hides concrete mux implementation from caller.
 
 ## Next Step
 
-Start Day 6: split single-file app into packages while preserving current behavior.
+Start Day 7: goroutines, ticker, and graceful shutdown.
