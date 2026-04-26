@@ -20,10 +20,13 @@ Expense Tracker API.
 | 4 | PostgreSQL via `pgx` | Completed |
 | 5 | Middleware, structured errors | Completed |
 | 6 | Project structure, packages | Completed |
-| 7 | Goroutines, ticker, graceful shutdown | Not started |
+| 7 | Goroutines, ticker, graceful shutdown | Completed |
 
 Current Day 6 folder:
 - `~/Documents/dev/personal/learning/golang/http-file-structure`
+
+Current Day 7 folder:
+- `~/Documents/dev/personal/learning/golang/http-goroutine`
 
 Previous Day 5 folder:
 - `~/Documents/dev/personal/learning/golang/http-pgsql`
@@ -35,6 +38,7 @@ Important:
 - `http-sync` is still old in-memory version.
 - `http-pgsql` is Day 5 single-file version.
 - `http-file-structure` is Day 6 split-package version with `internal/api` and `internal/store`.
+- `http-goroutine` is Day 7 version with goroutines, ticker, and graceful shutdown.
 
 ## Completed
 
@@ -80,24 +84,48 @@ Day 6:
 - `gofmt -w .` run from `http-file-structure`.
 - `go test ./...` compile check passed from `http-file-structure`.
 
+Day 7:
+- `main.go` uses `http.Server` instead of `http.ListenAndServe`.
+- Server starts in goroutine.
+- Background ticker goroutine logs expense count every 10 seconds.
+- `signal.NotifyContext` catches Ctrl+C and SIGTERM.
+- `<-ctx.Done()` waits for shutdown signal.
+- `server.Shutdown` with 5-second timeout context.
+- `store.Count(ctx)` added for ticker DB work.
+- Ticker exits cleanly via `ctx.Done()` in `select`.
+- `http.ErrServerClosed` ignored on shutdown.
+- `gofmt -w .` run from `http-goroutine`.
+- `go test ./...` compile check passed from `http-goroutine`.
+
 ## Current Code State
 
 Files:
-- `~/Documents/dev/personal/learning/golang/http-file-structure/main.go`
-- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/handlers.go`
-- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/middleware.go`
-- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/api/response.go`
-- `~/Documents/dev/personal/learning/golang/http-file-structure/internal/store/store.go`
+- `~/Documents/dev/personal/learning/golang/http-goroutine/main.go`
+- `~/Documents/dev/personal/learning/golang/http-goroutine/internal/api/handlers.go`
+- `~/Documents/dev/personal/learning/golang/http-goroutine/internal/api/middleware.go`
+- `~/Documents/dev/personal/learning/golang/http-goroutine/internal/api/response.go`
+- `~/Documents/dev/personal/learning/golang/http-goroutine/internal/store/store.go`
 
-Current state after Day 6:
-- Same API behavior as Day 5.
-- `main.go` imports `expense-tracker/internal/api` and `expense-tracker/internal/store`.
-- `main.go` calls `store.NewStore()`, `api.NewHandler(store)`, and `api.LoggingMiddleware(handler)`.
-- `internal/api` package handles HTTP routes, JSON responses, and middleware.
-- `internal/store` package handles `pgxpool`, migrations, and DB methods.
-- `api.NewHandler` returns `http.Handler`; actual returned value is `*http.ServeMux`.
-- `*http.ServeMux` works because it has `ServeHTTP`, so it satisfies `http.Handler` implicitly.
-- Compile check passes with `go test ./...` from `http-file-structure`.
+Current state after Day 7:
+- Same API behavior as Day 6.
+- `main.go` starts server in goroutine with `http.Server`.
+- `main.go` starts ticker goroutine via `go logExpenseCount(ctx, expenseStore)`.
+- `main.go` waits for shutdown signal via `<-ctx.Done()`.
+- `main.go` calls `server.Shutdown(shutdownCtx)` with 5-second timeout.
+- `logExpenseCount` uses `time.NewTicker` and `select` with `ctx.Done()`.
+- `store.Count(ctx)` returns expense count for ticker.
+- `go test ./...` passes from `http-goroutine`.
+
+## Day 7 Goal
+
+Add lifecycle and concurrency patterns:
+- goroutines for server and background work
+- ticker for periodic tasks
+- graceful shutdown via OS signals
+- context cancellation for goroutine coordination
+- `http.Server` for controlled shutdown
+
+Keep project structure same as Day 6.
 
 ## Day 5 Goal
 
@@ -178,6 +206,21 @@ curl -i -X POST http://localhost:8080/expenses -d 'bad'
 curl -i -X DELETE http://localhost:8080/expenses/not-a-number
 ```
 
+## Day 7 Teaching Points
+
+- `go fn()` starts new goroutine.
+- Goroutines are lightweight threads managed by Go runtime.
+- `time.NewTicker(interval)` fires events at regular intervals.
+- `defer ticker.Stop()` prevents resource leak.
+- `select` waits on multiple channels, picks first ready.
+- `context.Context` carries cancellation across goroutines.
+- `signal.NotifyContext` converts OS signals to context cancellation.
+- `http.Server.Shutdown` stops accepting new requests, drains active ones.
+- `http.ErrServerClosed` is expected on graceful shutdown, not an error.
+- Shutdown context must be fresh, not already-canceled signal context.
+- `<-ctx.Done()` blocks until context is canceled.
+- `context.WithTimeout` creates deadline for shutdown operation.
+
 ## Teaching Points
 
 - `any` is alias for `interface{}`.
@@ -200,4 +243,4 @@ curl -i -X DELETE http://localhost:8080/expenses/not-a-number
 
 ## Next Step
 
-Start Day 7: goroutines, ticker, and graceful shutdown.
+Start Day 8: (next topic TBD)
