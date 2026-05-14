@@ -1,130 +1,195 @@
 package main
 
 import (
+	"bufio"
+	"context"
 	"log"
 	"os"
+	"strings"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
 var (
-	TG_TOKEN = os.Getenv("TG_TOKEN")
+	// Menu texts
+	firstMenu  = "<b>Menu 1</b>\n\nA beautiful menu with a shiny inline button."
+	secondMenu = "<b>Menu 2</b>\n\nA better menu with even more shiny inline buttons."
 
-	// numericKeyboard = tgbotapi.NewReplyKeyboard(
-	// 	tgbotapi.NewKeyboardButtonRow(
-	// 		tgbotapi.NewKeyboardButton("1"),
-	// 		tgbotapi.NewKeyboardButton("2"),
-	// 		tgbotapi.NewKeyboardButton("3"),
-	// 	),
-	// 	tgbotapi.NewKeyboardButtonRow(
-	// 		tgbotapi.NewKeyboardButton("4"),
-	// 		tgbotapi.NewKeyboardButton("5"),
-	// 		tgbotapi.NewKeyboardButton("6"),
-	// 	),
-	// )
+	// Button texts
+	nextButton     = "Next"
+	backButton     = "Back"
+	closeButton    = "Close"
+	tutorialButton = "Tutorial"
 
-	numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+	// Store bot screaming status
+	screaming = false
+	bot       *tgbotapi.BotAPI
+
+	// Keyboard layout for the first menu. One button, one row
+	firstMenuMarkup = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonURL("1.com", "http://1.com"),
-			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
-			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
+			tgbotapi.NewInlineKeyboardButtonData(nextButton, nextButton),
+		),
+	)
+
+	// Keyboard layout for the second menu. Two buttons, one per row
+	secondMenuMarkup = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData(backButton, backButton),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("4", "4"),
-			tgbotapi.NewInlineKeyboardButtonData("5", "5"),
-			tgbotapi.NewInlineKeyboardButtonData("6", "6"),
+			tgbotapi.NewInlineKeyboardButtonData(closeButton, closeButton),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonURL(tutorialButton, "https://core.telegram.org/bots/api"),
 		),
 	)
 )
 
 func main() {
-	if TG_TOKEN == "" {
-		log.Fatalf("TG_TOKEN is not set")
+	var err error
+	bot, err = tgbotapi.NewBotAPI(os.Getenv("TG_TOKEN"))
+	if err != nil {
+		// Abort if something is wrong
+		log.Panic(err)
+	}
+
+	// Set this to true to log all interactions with telegram servers
+	bot.Debug = true
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 60
+
+	// Create a new cancellable background context. Calling `cancel()` leads to the cancellation of the context
+	ctx := context.Background()
+	ctx, cancel := context.WithCancel(ctx)
+
+	// `updates` is a golang channel which receives telegram updates
+	updates := bot.GetUpdatesChan(u)
+
+	// Pass cancellable context to goroutine
+	go receiveUpdates(ctx, updates)
+
+	// Tell the user the bot is online
+	log.Println("Start listening for updates. Press enter to stop")
+
+	// Wait for a newline symbol, then cancel handling updates
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+	cancel()
+
+}
+
+func receiveUpdates(ctx context.Context, updates tgbotapi.UpdatesChannel) {
+	// `for {` means the loop is infinite until we manually stop it
+	for {
+		select {
+		// stop looping if ctx is cancelled
+		case <-ctx.Done():
+			return
+		// receive update from channel and then handle it
+		case update := <-updates:
+			handleUpdate(update)
+		}
+	}
+}
+
+func handleUpdate(update tgbotapi.Update) {
+	switch {
+	// Handle messages
+	case update.Message != nil:
+		handleMessage(update.Message)
+		break
+
+	// Handle button clicks
+	case update.CallbackQuery != nil:
+		handleButton(update.CallbackQuery)
+		break
+	}
+}
+
+func handleMessage(message *tgbotapi.Message) {
+	user := message.From
+	text := message.Text
+
+	if user == nil {
 		return
 	}
 
-	bot, err := tgbotapi.NewBotAPI(TG_TOKEN)
+	// Print to console
+	log.Printf("%s wrote %s", user.FirstName, text)
+
+	var err error
+	if strings.HasPrefix(text, "/") {
+		err = handleCommand(message.Chat.ID, text)
+	} else if screaming && len(text) > 0 {
+		msg := tgbotapi.NewMessage(message.Chat.ID, strings.ToUpper(text))
+		// To preserve markdown, we attach entities (bold, italic..)
+		msg.Entities = message.Entities
+		_, err = bot.Send(msg)
+	} else {
+		// This is equivalent to forwarding, without the sender's name
+		copyMsg := tgbotapi.NewCopyMessage(message.Chat.ID, message.Chat.ID, message.MessageID)
+		_, err = bot.CopyMessage(copyMsg)
+	}
+
 	if err != nil {
-		log.Fatalln("tgbotapi init failed", err)
+		log.Printf("An error occured: %s", err.Error())
+	}
+}
+
+// When we get a command, we react accordingly
+func handleCommand(chatId int64, command string) error {
+	var err error
+
+	switch command {
+	case "/scream":
+		screaming = true
+		break
+
+	case "/whisper":
+		screaming = false
+		break
+
+	case "/menu":
+		err = sendMenu(chatId)
+		break
 	}
 
-	bot.Debug = true
+	return err
+}
 
-	updateConfig := tgbotapi.NewUpdate(0)
+func handleButton(query *tgbotapi.CallbackQuery) {
+	var text string
 
-	updateConfig.Timeout = 30
+	markup := tgbotapi.NewInlineKeyboardMarkup()
+	message := query.Message
 
-	updates := bot.GetUpdatesChan(updateConfig)
-
-	for update := range updates {
-		// if update.Message == nil {
-		// 	continue
-		// }
-
-		// echo example
-		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		//
-		// msg.ReplyToMessageID = update.Message.MessageID
-		// echo example
-
-		// command handling
-		// if !update.Message.IsCommand() {
-		// 	continue
-		// }
-		//
-		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
-		//
-		// switch update.Message.Command() {
-		// case "help":
-		// 	msg.Text = "/sayhi or /status"
-		// case "sayhi":
-		// 	msg.Text = "Hiiii"
-		// case "status":
-		// 	msg.Text = "OK here"
-		// default:
-		// 	msg.Text = "use /help"
-		// }
-		// command handling
-
-		// keyboard
-		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-		//
-		// switch update.Message.Text {
-		// case "open":
-		// 	msg.ReplyMarkup = numericKeyboard
-		// case "close":
-		// 	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-		// }
-		// keyboard
-
-		// if _, err := bot.Send(msg); err != nil {
-		// 	log.Fatalln("send message failed:", err)
-		// }
-
-		// inline keyboard
-		if update.Message != nil {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-
-			switch update.Message.Text {
-			case "open":
-				msg.ReplyMarkup = numericKeyboard
-			}
-
-			if _, err := bot.Send(msg); err != nil {
-				log.Fatalln("send message failed:", err)
-			}
-		} else if update.CallbackQuery != nil {
-			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
-			if _, err := bot.Request(callback); err != nil {
-				log.Fatalln("request callback err:", err)
-			}
-
-			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
-			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-			if _, err := bot.Send(msg); err != nil {
-				log.Fatalln("send message failed:", err)
-			}
-		}
-		// inline keyboard
+	if query.Data == nextButton {
+		text = secondMenu
+		markup = secondMenuMarkup
+	} else if query.Data == backButton {
+		text = firstMenu
+		markup = firstMenuMarkup
+	} else if query.Data == closeButton {
+		closeMarkup := tgbotapi.NewEditMessageReplyMarkup(message.Chat.ID, message.MessageID, tgbotapi.InlineKeyboardMarkup{})
+		closeMarkup.ReplyMarkup = nil
+		bot.Send(closeMarkup)
+		return
 	}
+
+	callbackCfg := tgbotapi.NewCallback(query.ID, "")
+	bot.Send(callbackCfg)
+
+	// Replace menu text and keyboard
+	msg := tgbotapi.NewEditMessageTextAndMarkup(message.Chat.ID, message.MessageID, text, markup)
+	msg.ParseMode = tgbotapi.ModeHTML
+	bot.Send(msg)
+}
+
+func sendMenu(chatId int64) error {
+	msg := tgbotapi.NewMessage(chatId, firstMenu)
+	msg.ParseMode = tgbotapi.ModeHTML
+	msg.ReplyMarkup = firstMenuMarkup
+	_, err := bot.Send(msg)
+	return err
 }
