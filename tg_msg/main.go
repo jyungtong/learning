@@ -10,16 +10,29 @@ import (
 var (
 	TG_TOKEN = os.Getenv("TG_TOKEN")
 
-	numericKeyboard = tgbotapi.NewReplyKeyboard(
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("1"),
-			tgbotapi.NewKeyboardButton("2"),
-			tgbotapi.NewKeyboardButton("3"),
+	// numericKeyboard = tgbotapi.NewReplyKeyboard(
+	// 	tgbotapi.NewKeyboardButtonRow(
+	// 		tgbotapi.NewKeyboardButton("1"),
+	// 		tgbotapi.NewKeyboardButton("2"),
+	// 		tgbotapi.NewKeyboardButton("3"),
+	// 	),
+	// 	tgbotapi.NewKeyboardButtonRow(
+	// 		tgbotapi.NewKeyboardButton("4"),
+	// 		tgbotapi.NewKeyboardButton("5"),
+	// 		tgbotapi.NewKeyboardButton("6"),
+	// 	),
+	// )
+
+	numericKeyboard = tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonURL("1.com", "http://1.com"),
+			tgbotapi.NewInlineKeyboardButtonData("2", "2"),
+			tgbotapi.NewInlineKeyboardButtonData("3", "3"),
 		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("4"),
-			tgbotapi.NewKeyboardButton("5"),
-			tgbotapi.NewKeyboardButton("6"),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("4", "4"),
+			tgbotapi.NewInlineKeyboardButtonData("5", "5"),
+			tgbotapi.NewInlineKeyboardButtonData("6", "6"),
 		),
 	)
 )
@@ -44,9 +57,9 @@ func main() {
 	updates := bot.GetUpdatesChan(updateConfig)
 
 	for update := range updates {
-		if update.Message == nil {
-			continue
-		}
+		// if update.Message == nil {
+		// 	continue
+		// }
 
 		// echo example
 		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
@@ -74,18 +87,44 @@ func main() {
 		// command handling
 
 		// keyboard
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-
-		switch update.Message.Text {
-		case "open":
-			msg.ReplyMarkup = numericKeyboard
-		case "close":
-			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-		}
+		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+		//
+		// switch update.Message.Text {
+		// case "open":
+		// 	msg.ReplyMarkup = numericKeyboard
+		// case "close":
+		// 	msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		// }
 		// keyboard
 
-		if _, err := bot.Send(msg); err != nil {
-			log.Fatalln("send message failed:", err)
+		// if _, err := bot.Send(msg); err != nil {
+		// 	log.Fatalln("send message failed:", err)
+		// }
+
+		// inline keyboard
+		if update.Message != nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+
+			switch update.Message.Text {
+			case "open":
+				msg.ReplyMarkup = numericKeyboard
+			}
+
+			if _, err := bot.Send(msg); err != nil {
+				log.Fatalln("send message failed:", err)
+			}
+		} else if update.CallbackQuery != nil {
+			callback := tgbotapi.NewCallback(update.CallbackQuery.ID, update.CallbackQuery.Data)
+			if _, err := bot.Request(callback); err != nil {
+				log.Fatalln("request callback err:", err)
+			}
+
+			msg := tgbotapi.NewMessage(update.CallbackQuery.Message.Chat.ID, update.CallbackQuery.Data)
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			if _, err := bot.Send(msg); err != nil {
+				log.Fatalln("send message failed:", err)
+			}
 		}
+		// inline keyboard
 	}
 }
