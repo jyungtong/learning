@@ -1,49 +1,91 @@
 package main
 
 import (
-	"encoding/json"
-	"fmt"
-	"io"
 	"log"
-	"net/http"
-	// "net/http/httputil"
 	"os"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
-var TG_BASE_URL = "https://api.telegram.org"
-var TG_TOKEN = os.Getenv("TG_TOKEN")
+var (
+	TG_TOKEN = os.Getenv("TG_TOKEN")
 
-type User struct {
-	Id int
-	Name string
-}
+	numericKeyboard = tgbotapi.NewReplyKeyboard(
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("1"),
+			tgbotapi.NewKeyboardButton("2"),
+			tgbotapi.NewKeyboardButton("3"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("4"),
+			tgbotapi.NewKeyboardButton("5"),
+			tgbotapi.NewKeyboardButton("6"),
+		),
+	)
+)
 
 func main() {
-	// if TG_TOKEN == "" {
-	// 	log.Fatalf("TG_TOKEN is not set")
-	// 	return
-	// }
+	if TG_TOKEN == "" {
+		log.Fatalf("TG_TOKEN is not set")
+		return
+	}
 
-	// resp, err := http.Get(fmt.Sprintf("%s/%s/getUpdates", TG_BASE_URL, TG_TOKEN))
-	resp, err := http.Get("https://jsonplaceholder.typicode.com/users/1")
+	bot, err := tgbotapi.NewBotAPI(TG_TOKEN)
 	if err != nil {
-		log.Println("getUpdates err:", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("resp.Body err:", err)
-	}
-	//
-	// fmt.Println(body)
-	// respBody, _ := httputil.DumpResponse(resp, true)
-	// fmt.Printf("%s", respBody)
-
-	var user User
-	if err := json.Unmarshal(body, &user); err != nil {
-		log.Fatalf("unable decode json: %s", err)
+		log.Fatalln("tgbotapi init failed", err)
 	}
 
-	fmt.Println("ID:", user.Id, "name:", user.Name)
+	bot.Debug = true
+
+	updateConfig := tgbotapi.NewUpdate(0)
+
+	updateConfig.Timeout = 30
+
+	updates := bot.GetUpdatesChan(updateConfig)
+
+	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+
+		// echo example
+		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+		//
+		// msg.ReplyToMessageID = update.Message.MessageID
+		// echo example
+
+		// command handling
+		// if !update.Message.IsCommand() {
+		// 	continue
+		// }
+		//
+		// msg := tgbotapi.NewMessage(update.Message.Chat.ID, "")
+		//
+		// switch update.Message.Command() {
+		// case "help":
+		// 	msg.Text = "/sayhi or /status"
+		// case "sayhi":
+		// 	msg.Text = "Hiiii"
+		// case "status":
+		// 	msg.Text = "OK here"
+		// default:
+		// 	msg.Text = "use /help"
+		// }
+		// command handling
+
+		// keyboard
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
+
+		switch update.Message.Text {
+		case "open":
+			msg.ReplyMarkup = numericKeyboard
+		case "close":
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		}
+		// keyboard
+
+		if _, err := bot.Send(msg); err != nil {
+			log.Fatalln("send message failed:", err)
+		}
+	}
 }
