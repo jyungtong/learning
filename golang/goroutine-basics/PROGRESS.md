@@ -4,7 +4,8 @@ Goal:
 Learn goroutines from mechanics to backend patterns before returning to Expense Tracker Day 7.
 
 Run style:
-Each future example file lives directly in this folder.
+- Each future example file lives directly in this folder.
+- Give code block only. Do not create files.
 
 Example command:
 go run 01-blocking.go
@@ -13,12 +14,12 @@ go run -race 15-race-detector.go
 
 ## Phase 1: Mechanics
 
-- [ ] `01-blocking.go` - normal function call blocks
-- [ ] `02-goroutine.go` - `go fn()` starts concurrent work
-- [ ] `03-sleep-wait.go` - crude wait with `time.Sleep`
-- [ ] `04-waitgroup.go` - proper wait with `sync.WaitGroup`
-- [ ] `05-multiple.go` - multiple goroutines, nondeterministic order
-- [ ] `06-channel-unbuffered.go` - unbuffered send waits for receive
+- [x] `01-blocking.go` - normal function call blocks
+- [x] `02-goroutine.go` - `go fn()` starts concurrent work
+- [x] `03-sleep-wait.go` - crude wait with `time.Sleep`
+- [x] `04-waitgroup.go` - proper wait with `sync.WaitGroup`
+- [x] `05-multiple.go` - multiple goroutines, nondeterministic order
+- [x] `06-channel-unbuffered.go` - unbuffered send waits for receive
 - [ ] `07-channel-buffered.go` - buffered send waits only when buffer full
 - [ ] `08-channel-close-range.go` - sender closes, receiver ranges
 - [ ] `09-directional.go` - `chan<-` and `<-chan` compile-time safety

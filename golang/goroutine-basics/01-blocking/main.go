@@ -16,4 +16,8 @@ func main() {
 	fmt.Println("main: before slowTask(1)")
 	slowTask(1)
 	fmt.Println("main: after slowTask(1)")
+
+	fmt.Println("main: before slowTask(2)")
+	slowTask(2)
+	fmt.Println("main: after slowTask(2)")
 }
