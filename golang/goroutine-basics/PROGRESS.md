@@ -20,16 +20,16 @@ go run -race 15-race-detector.go
 - [x] `04-waitgroup.go` - proper wait with `sync.WaitGroup`
 - [x] `05-multiple.go` - multiple goroutines, nondeterministic order
 - [x] `06-channel-unbuffered.go` - unbuffered send waits for receive
-- [ ] `07-channel-buffered.go` - buffered send waits only when buffer full
-- [ ] `08-channel-close-range.go` - sender closes, receiver ranges
-- [ ] `09-directional.go` - `chan<-` and `<-chan` compile-time safety
-- [ ] `10-select.go` - wait on multiple channel operations
+- [x] `07-channel-buffered.go` - buffered send waits only when buffer full
+- [x] `08-channel-close-range.go` - sender closes, receiver ranges
+- [x] `09-directional.go` - `chan<-` and `<-chan` compile-time safety
+- [x] `10-select.go` - wait on multiple channel operations
 
 ## Phase 2: Safety
 
-- [ ] `11-context-cancel.go` - `ctx.Done()` stops goroutine
-- [ ] `12-context-timeout.go` - `context.WithTimeout` sets deadline
-- [ ] `13-ticker.go` - repeated work with `time.Ticker`
+- [x] `11-context-cancel.go` - `ctx.Done()` stops goroutine
+- [x] `12-context-timeout.go` - `context.WithTimeout` sets deadline
+- [x] `13-ticker.go` - repeated work with `time.Ticker`
 - [ ] `14-goroutine-leak.go` - goroutine stuck forever
 - [ ] `15-race-detector.go` - intentional race, use `go run -race`
 - [ ] `16-mutex-fix.go` - fix shared state race with `sync.Mutex`
