@@ -30,13 +30,13 @@ go run -race 15-race-detector.go
 - [x] `11-context-cancel.go` - `ctx.Done()` stops goroutine
 - [x] `12-context-timeout.go` - `context.WithTimeout` sets deadline
 - [x] `13-ticker.go` - repeated work with `time.Ticker`
-- [ ] `14-goroutine-leak.go` - goroutine stuck forever
-- [ ] `15-race-detector.go` - intentional race, use `go run -race`
-- [ ] `16-mutex-fix.go` - fix shared state race with `sync.Mutex`
+- [x] `14-goroutine-leak.go` - goroutine stuck forever
+- [x] `15-race-detector.go` - intentional race, use `go run -race`
+- [x] `16-mutex-fix.go` - fix shared state race with `sync.Mutex`
 
 ## Phase 3: Patterns
 
-- [ ] `17-worker-pool.go` - fixed workers, job channel, result channel
+- [x] `17-worker-pool.go` - fixed workers, job channel, result channel
 - [ ] `18-job-queue-timeout.go` - timeout while waiting for job/result
 - [ ] `19-rate-limiter.go` - channel token bucket
 - [ ] `20-fan-out-fan-in.go` - split work, merge results
