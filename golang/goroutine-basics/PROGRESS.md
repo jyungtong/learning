@@ -38,7 +38,7 @@ go run -race 15-race-detector.go
 
 - [x] `17-worker-pool.go` - fixed workers, job channel, result channel
 - [x] `18-job-queue-timeout.go` - timeout while waiting for job/result
-- [ ] `19-rate-limiter.go` - channel token bucket
+- [x] `19-rate-limiter.go` - channel token bucket
 - [ ] `21-graceful-shutdown.go` - signal, context, WaitGroup, drain
 
 ## Phase 4: Backend Mapping
