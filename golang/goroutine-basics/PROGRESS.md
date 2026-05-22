@@ -39,7 +39,9 @@ go run -race 15-race-detector.go
 - [x] `17-worker-pool.go` - fixed workers, job channel, result channel
 - [x] `18-job-queue-timeout.go` - timeout while waiting for job/result
 - [x] `19-rate-limiter.go` - channel token bucket
-- [ ] `21-graceful-shutdown.go` - signal, context, WaitGroup, drain
+- [ ] `20-fan-out-in.go` - spawn N goroutines, merge results into one channel
+- [ ] `20b-errgroup.go` - goroutine error propagation with `golang.org/x/sync/errgroup`
+- [x] `21-graceful-shutdown.go` - signal, context, WaitGroup, drain
 
 ## Phase 4: Backend Mapping
 
@@ -61,6 +63,8 @@ go run -race 15-race-detector.go
 - Context tells goroutines when to stop.
 - Every goroutine needs an exit path.
 - Shared memory needs protection: mutex, channel ownership, or atomic.
+- Fan-out: one input channel, N goroutines consume it. Fan-in: N goroutines write to one merged output channel.
+- `errgroup.Go` runs goroutines; `errgroup.Wait` returns first non-nil error and cancels the group context.
 
 ## Common Mistakes
 
