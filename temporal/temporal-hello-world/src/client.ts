@@ -11,7 +11,7 @@ async function run() {
   const handle = await client.workflow.start(example, {
     taskQueue: 'hello-world',
     // type inference works! args: [name: string]
-    args: ['WORLD!'],
+    args: ['Temporal'],
     // in practice, use a meaningful business ID, like customerId or transactionId
     workflowId: 'workflow-' + nanoid(),
   });
