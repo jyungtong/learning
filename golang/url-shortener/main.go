@@ -6,10 +6,12 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sync"
 )
 
 var (
 	store = map[string]string{}
+	mu sync.RWMutex
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -46,7 +48,9 @@ func shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code := generateShortCode()
+	mu.Lock()
 	store[code] = reqBody.URL
+	mu.Unlock()
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -56,7 +60,9 @@ func shortenHandler(w http.ResponseWriter, r *http.Request) {
 func getUrlHandler(w http.ResponseWriter, r *http.Request) {
 	code := r.PathValue("code")
 
+	mu.RLock()
 	url := store[code]
+	mu.RUnlock()
 	if url == "" {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
