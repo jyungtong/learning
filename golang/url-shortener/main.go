@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -27,15 +28,46 @@ func shortenHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	// todo: generateShortCode and store 
+
+	var reqBody struct {
+		URL string
+	}
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&reqBody); err != nil {
+		log.Println("err decoding r.Body:", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if reqBody.URL == "" {
+		log.Println("url empty: ", reqBody.URL)
+		http.Error(w, "bad request", http.StatusBadRequest)
+		return
+	}
+
+	code := generateShortCode()
+	store[code] = reqBody.URL
 
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"msg": generateShortCode()})
+	json.NewEncoder(w).Encode(map[string]string{"short_url": fmt.Sprintf("http://localhost:8080/%s", code)})
+}
+
+func getUrlHandler(w http.ResponseWriter, r *http.Request) {
+	code := r.PathValue("code")
+
+	url := store[code]
+	if url == "" {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	w.Write([]byte(store[code]))
 }
 
 func main() {
 	http.HandleFunc("/shorten", shortenHandler)
+	http.HandleFunc("/{code}", getUrlHandler)
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
