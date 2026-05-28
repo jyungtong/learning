@@ -1,0 +1,14 @@
+# URL Shortener API
+
+@baseUrl = http://localhost:8080
+
+### Shorten a URL
+POST {{baseUrl}}/shorten
+Content-Type: application/json
+
+{
+  "url": "https://www.example.com/some/very/long/path"
+}
+
+### Resolve a short code
+GET {{baseUrl}}/KIYcvE

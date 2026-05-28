@@ -72,8 +72,12 @@ func getUrlHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.HandleFunc("/shorten", shortenHandler)
-	http.HandleFunc("/{code}", getUrlHandler)
+	mux := http.NewServeMux()
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	mux.HandleFunc("/shorten", shortenHandler)
+	mux.HandleFunc("/{code}", getUrlHandler)
+
+	handler := loggingMiddleware(mux)
+
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }
