@@ -11,4 +11,7 @@ Content-Type: application/json
 }
 
 ### Resolve a short code
-GET {{baseUrl}}/KIYcvE
+GET {{baseUrl}}/Iyyy11
+
+### panic
+GET {{baseUrl}}/panic

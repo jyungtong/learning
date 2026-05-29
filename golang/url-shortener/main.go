@@ -11,7 +11,7 @@ import (
 
 var (
 	store = map[string]string{}
-	mu sync.RWMutex
+	mu    sync.RWMutex
 )
 
 const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -76,8 +76,14 @@ func main() {
 
 	mux.HandleFunc("/shorten", shortenHandler)
 	mux.HandleFunc("/{code}", getUrlHandler)
+	mux.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+		panic("something went wrong")
+		// var s *string
+		// fmt.Println(*s)
+	})
 
-	handler := loggingMiddleware(mux)
+	handler := recoveryMiddleware(loggingMiddleware(mux))
+	// handler := loggingMiddleware(mux)
 
 	log.Fatal(http.ListenAndServe(":8080", handler))
 }
