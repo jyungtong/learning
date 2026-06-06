@@ -110,6 +110,28 @@ func queryDemo(db *sql.DB) {
 	}
 }
 
+func updateDeleteDemo(db *sql.DB) {
+	res, err := db.Exec(
+		"UPDATE users SET age = ? WHERE name = ?",
+		33, "John", 
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	n, _ := res.RowsAffected()
+	fmt.Printf("updated %d rows\n", n)
+
+	res, err = db.Exec(
+		"DELETE FROM users WHERE name = ?",
+		"Dave",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+	n, _ = res.RowsAffected()
+	fmt.Printf("deleted %d rows\n", n)
+}
+
 func main() {
 	db := openDB()
 	defer db.Close()
@@ -117,4 +139,5 @@ func main() {
 	ddl(db)
 	insertDemo(db)
 	queryDemo(db)
+	updateDeleteDemo(db)
 }
