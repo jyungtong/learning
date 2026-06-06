@@ -113,7 +113,7 @@ func queryDemo(db *sql.DB) {
 func updateDeleteDemo(db *sql.DB) {
 	res, err := db.Exec(
 		"UPDATE users SET age = ? WHERE name = ?",
-		33, "John", 
+		33, "John",
 	)
 	if err != nil {
 		log.Fatal(err)
@@ -132,6 +132,47 @@ func updateDeleteDemo(db *sql.DB) {
 	fmt.Printf("deleted %d rows\n", n)
 }
 
+func transactionDemo(db *sql.DB) {
+	tx, err := db.Begin()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer tx.Rollback()
+
+	_, err = tx.Exec(
+		"INSERT INTO users (name, age) VALUES (?, ?)",
+		"Eve", 22,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var count int
+	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE name = ?", "Lala").
+		Scan(&count)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if count == 0 {
+		fmt.Println("transactionDemo: Lala not found, rolling back")
+		return
+	}
+
+	_, err = tx.Exec(
+		"UPDATE users SET age = ? WHERE name = ?",
+		30, "Eve",
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
 	db := openDB()
 	defer db.Close()
@@ -140,4 +181,7 @@ func main() {
 	insertDemo(db)
 	queryDemo(db)
 	updateDeleteDemo(db)
+	queryDemo(db)
+	transactionDemo(db)
+	queryDemo(db)
 }
