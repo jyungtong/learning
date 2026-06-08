@@ -173,6 +173,54 @@ func transactionDemo(db *sql.DB) {
 	}
 }
 
+func preparedStmtDemo(db *sql.DB) {
+	insStmt, err := db.Prepare("INSERT INTO users (name, age) VALUES (?, ?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer insStmt.Close()
+
+	people := []struct {
+		name string
+		age  int
+	}{
+		{"Frank", 40},
+		{"Grace", 31},
+	}
+
+	for _, p := range people {
+		res, err := insStmt.Exec(p.name, p.age)
+		if err != nil {
+			log.Fatal(err)
+		}
+		id, _ := res.LastInsertId()
+		fmt.Printf("prepared insert id=%d name=%s age=%d\n", id, p.name, p.age)
+	}
+
+	selStmt, err := db.Prepare("SELECT id, name, age FROM users WHERE name = ?")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer selStmt.Close()
+
+	var (
+		id   int
+		name string
+		age  int
+	)
+	for _, n := range []string{"Frank", "Leo", "Grace"} {
+		err := selStmt.QueryRow(n).Scan(&id, &name, &age)
+		switch {
+		case err == sql.ErrNoRows:
+			fmt.Printf("prepared query: %s not found\n", n)
+		case err != nil:
+			log.Fatal(err)
+		default:
+			fmt.Printf("prepared query: id=%d name=%s age=%d\n", id, name, age)
+		}
+	}
+}
+
 func main() {
 	db := openDB()
 	defer db.Close()
@@ -183,5 +231,7 @@ func main() {
 	updateDeleteDemo(db)
 	queryDemo(db)
 	transactionDemo(db)
+	queryDemo(db)
+	preparedStmtDemo(db)
 	queryDemo(db)
 }
