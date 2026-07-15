@@ -1,0 +1,143 @@
+:root {
+  --background: #f5f7f8;
+  --foreground: #14212a;
+  --border: #c8d2d7;
+  --accent: #087b6d;
+  --accent-hover: #05675c;
+  --error: #b42318;
+}
+
+html {
+  height: 100%;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100%;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+.greet-page {
+  display: grid;
+  min-height: 100vh;
+  padding: 24px;
+  place-items: center;
+}
+
+.greet-panel {
+  width: min(100%, 480px);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 32px;
+  box-shadow: 0 12px 30px rgb(20 33 42 / 8%);
+}
+
+.service-name {
+  color: var(--accent);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin-top: 8px;
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.greet-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.greet-form label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.greet-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.greet-controls input {
+  min-width: 0;
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--foreground);
+  font: inherit;
+  padding: 10px 12px;
+}
+
+.greet-controls input:focus {
+  border-color: var(--accent);
+  outline: 2px solid rgb(8 123 109 / 20%);
+  outline-offset: 1px;
+}
+
+.greet-controls button {
+  flex: none;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.greet-controls button:hover {
+  background: var(--accent-hover);
+}
+
+.greet-error,
+.greet-result {
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.greet-error {
+  color: var(--error);
+}
+
+.greet-result {
+  color: var(--accent-hover);
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .greet-page {
+    padding: 16px;
+  }
+
+  .greet-panel {
+    padding: 24px;
+  }
+
+  .greet-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
